@@ -1,4 +1,5 @@
 const { simpleParser } = require('mailparser');
+const cheerio = require('cheerio')
 var fs = require('fs'), fileStream;
 
 var Imap = require('imap'),
@@ -30,22 +31,45 @@ const getEmaiInformation = () => {
           console.log('Message #%d', seqno);
           var prefix = '(#' + seqno + ') ';
 
-          const regex = /tel:([^"]+)"/g
+          const regex = /<table[^>]*>[\s\S]*?<\/table>/g;
 
           msg.on('body', function (stream, info) {
             simpleParser(stream, async (err, parsed) => {
               const date = parsed.date;
               if (date >= new Date('2024-12-03T19:20:00Z')) {
-                //console.log(JSON.stringify(parsed.header))
-                //console.log(parsed.subject)
-                //console.log(parsed.date)
+                //console.log("Header"+JSON.stringify(parsed.header))
+                console.log(parsed.subject)
+                console.log(parsed.date)
                 let matches;
                 const values = []
-                const html = parsed.html
-                while((matches = regex.exec(html)) !== null){
-                  values.push(matches[1])
+                while((matches = regex.exec(parsed.text)) !== null){
+                  values.push(matches[0])
                 }
-                console.log(values)
+                //console.log(values)
+                if(values[0] === undefined) return;
+                const $ = cheerio.load(values[0])
+
+                const headersArray = [];
+                $('table').each((index, table) => {
+                  const headers = []
+                  $(table).find('tr').first().find('th').each((i, th) => {
+                    headers.push($(th).html());
+                  })
+                  headersArray.push(headers)
+                })
+
+                console.log('Headers: ',headersArray)
+
+                //if(headersArray[0] !== '')
+
+                const firstRow = $('table tr').eq(1).find('td');
+
+                const firstValues = []
+                firstRow.each((index, element) => {
+                  firstValues.push($(element).text());
+                })
+
+                console.log("First Value: ", firstValues)
               }
             })
           });
