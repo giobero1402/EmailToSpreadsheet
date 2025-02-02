@@ -5,7 +5,7 @@ var fs = require('fs'), fileStream;
 var Imap = require('imap'),
   inspect = require('util').inspect;
 var imap = new Imap({
-  user: 'brand.beru@gmail.com',
+  user: '',
   password: '',
   host: 'imap.gmail.com',
   port: 993,
